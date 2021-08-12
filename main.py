@@ -1,3 +1,4 @@
+# this script is used for changing 1 file or a whole folder from a .txt file (.json writing) to a usable .csv file
 import click
 import os
 import json
@@ -25,7 +26,7 @@ def crfile(fp, fn):
             writer.writerow([v.get(c) for c in counts])
     return f"{fn}-{handy_id}.csv"
 
-
+# changes the timestemp to daytime for readability in the terminal. Does not change the Value in the .csv file
 def tsrange(dfhead):
     startms = dfhead['ts'].iloc[0]
     endms = dfhead['ts'].iloc[-1]
@@ -39,22 +40,25 @@ def tsrange(dfhead):
     string = startdt + ' to: ' + enddt
     return string
 
-
+# module click used for a console application
 @click.command()
 @click.argument('path')
-@click.option('--fname', type=str, help='This is a test.', default='export')
+@click.option('--fname', type=str, help='Input a file name | Does not affect multiple files at this point', default='export')
+# the main function handles the output of the file
 def main(path, fname):
     click.echo()
     if os.path.isfile(path):
         df = pd.read_csv(crfile(path, fname), sep=';')
         click.echo("Number of rows present: " + str(len(df)))
         click.echo("Timestamp from: " + tsrange(df))
+        click.echo()
 
     else:
         files = [g for g in os.listdir(path)]
         for i in files:
-            df = pd.read_csv(crfile((path + i), os.path.splitext(i)[0]))
+            df = pd.read_csv(crfile((path + i), os.path.splitext(i)[0]), sep=';')
             click.echo("Number of rows present: " + str(len(df)))
+            click.echo("Timestamp from: " + tsrange(df))
             click.echo()
 
 
