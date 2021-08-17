@@ -1,4 +1,6 @@
 # this script is used for changing 1 file or a whole folder from a .txt file (.json writing) to a usable .csv file
+# also it creates a map of the location_latitude and location_longitude colums in the .csv
+
 import click
 import os
 import json
@@ -30,6 +32,7 @@ def crfile(fp, fn):
 
 
 # changes the timestemp to daytime for readability in the terminal. Does not change the Value in the .csv file
+# tsrange = timestemp range
 def tsrange(dfhead):
     startms = dfhead['ts'].iloc[0]
     endms = dfhead['ts'].iloc[-1]
@@ -44,8 +47,8 @@ def tsrange(dfhead):
     return string
 
 
-# counting the entries in a given collum.
-def crval(input_df):
+# counting the entries in a given collum. | coval = count values
+def coval(input_df):
     collist = list(input_df)
 
     for i in collist:
@@ -57,11 +60,12 @@ def crval(input_df):
         click.echo(i + ' - ' + str(counter))
 
 
-# creates map of the route taken as a .png file in ./files/img/output/
+# creates map of the route taken as a .png file in ./files/img/output/ | crmap = create map
 def crmap(dataframe,imgname):
+
     # creating variables to put in the coordinate system (CS) and creating a variable for the database file
-    lat = [+ i for i in dataframe['location_latitude'] if pd.notna(i)]
     lon = [+ i for i in dataframe['location_longitude'] if pd.notna(i)]
+    lat = [+ i for i in dataframe['location_latitude'] if pd.notna(i)]
 
     # creating the CS with the map.png in the background
     imgdata = plt.imread('./files/img/map/map.png')
@@ -71,8 +75,8 @@ def crmap(dataframe,imgname):
 
     # placing the coordinates in the CS, labeling the axes and saving the .png
     plt.plot(lon, lat, color='red', marker='o')
-    plt.ylabel('Latitude')
     plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
     fig.savefig('./files/img/output/' + os.path.splitext(imgname)[0], dpi=fig.dpi)
 
     # if you want to show the final result on a plot do it with: plt.show()
@@ -87,7 +91,7 @@ def crmap(dataframe,imgname):
 def main(path, fname):
     click.echo()
 
-    # creating 1 file
+    # creating one file
     if os.path.isfile(path):
         file = crfile(path, fname)
         click.secho(file, fg='green', bold=True)
@@ -95,7 +99,7 @@ def main(path, fname):
         crmap(df, file) if 'location_latitude' in df.columns else click.secho('No location data in file.', fg='red')
         click.echo("Number of rows present: " + str(len(df)))
         click.echo("Timestamp from: " + tsrange(df))
-        crval(df)
+        coval(df)
         click.echo()
 
     # using the whole folder
@@ -108,7 +112,7 @@ def main(path, fname):
             crmap(df, file) if 'location_latitude' in df.columns else click.secho('No location data in file.', fg='red')
             click.echo("Number of rows present: " + str(len(df)))
             click.echo("Timestamp from: " + tsrange(df))
-            crval(df)
+            coval(df)
             click.echo()
 
 
