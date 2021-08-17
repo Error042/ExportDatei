@@ -5,6 +5,8 @@ import json
 import csv
 import pandas as pd
 from datetime import datetime
+import matplotlib.pyplot as plt
+
 
 # The function for handling the transformation process | crfile = create file
 def crfile(fp, fn):
@@ -19,12 +21,13 @@ def crfile(fp, fn):
         for k in v:
             counts[k] = counts.get(k, 0) + 1
 
-    with open(f"{fn}-{handy_id}.csv", "w") as csvfile:
+    with open(f"files/output/{fn}-{handy_id}.csv", "w") as csvfile:
         writer = csv.writer(csvfile, delimiter=";", quoting=csv.QUOTE_MINIMAL)
         writer.writerow([c for c in counts])
         for v in vals:
             writer.writerow([v.get(c) for c in counts])
     return f"{fn}-{handy_id}.csv"
+
 
 # changes the timestemp to daytime for readability in the terminal. Does not change the Value in the .csv file
 def tsrange(dfhead):
@@ -40,6 +43,42 @@ def tsrange(dfhead):
     string = startdt + ' to: ' + enddt
     return string
 
+
+# counting the entries in a given collum.
+def crval(input_df):
+    collist = list(input_df)
+
+    for i in collist:
+        counter = 0
+
+        for j in input_df[i]:
+            if pd.notna(j):
+                counter += 1
+        click.echo(i + ' - ' + str(counter))
+
+
+# creates map of the route taken as a .png file in ./files/img/output/
+def crmap(dataframe,imgname):
+    # creating variables to put in the coordinate system (CS) and creating a variable for the database file
+    lat = [+ i for i in dataframe['location_latitude'] if pd.notna(i)]
+    lon = [+ i for i in dataframe['location_longitude'] if pd.notna(i)]
+
+    # creating the CS with the map.png in the background
+    imgdata = plt.imread('./files/img/map/map.png')
+    fig, ax = plt.subplots()
+    ax.imshow(imgdata, extent=[12.25800, 12.47678, 51.27130, 51.40799])
+    ax.set_aspect(1.0/ax.get_data_ratio(), adjustable='box')
+
+    # placing the coordinates in the CS, labeling the axes and saving the .png
+    plt.plot(lon, lat, color='red', marker='o')
+    plt.ylabel('Latitude')
+    plt.xlabel('Longitude')
+    fig.savefig('./files/img/output/' + os.path.splitext(imgname)[0], dpi=fig.dpi)
+
+    # if you want to show the final result on a plot do it with: plt.show()
+    return 0
+
+
 # module click used for a console application
 @click.command()
 @click.argument('path')
@@ -47,18 +86,29 @@ def tsrange(dfhead):
 # the main function handles the output of the file
 def main(path, fname):
     click.echo()
+
+    # creating 1 file
     if os.path.isfile(path):
-        df = pd.read_csv(crfile(path, fname), sep=';')
+        file = crfile(path, fname)
+        click.secho(file, fg='green', bold=True)
+        df = pd.read_csv('./files/output/' + file, sep=';')
+        crmap(df, file) if 'location_latitude' in df.columns else click.secho('No location data in file.', fg='red')
         click.echo("Number of rows present: " + str(len(df)))
         click.echo("Timestamp from: " + tsrange(df))
+        crval(df)
         click.echo()
 
+    # using the whole folder
     else:
         files = [g for g in os.listdir(path)]
         for i in files:
-            df = pd.read_csv(crfile((path + i), os.path.splitext(i)[0]), sep=';')
+            file = crfile((path + i), os.path.splitext(i)[0])
+            click.secho(file, fg='green', bold=True)
+            df = pd.read_csv('./files/output/' + file, sep=';')
+            crmap(df, file) if 'location_latitude' in df.columns else click.secho('No location data in file.', fg='red')
             click.echo("Number of rows present: " + str(len(df)))
             click.echo("Timestamp from: " + tsrange(df))
+            crval(df)
             click.echo()
 
 
